@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Golf Tracker</title>
+  <title>golf tracker</title>
   <link href="https://fonts.googleapis.com/css2?family=Lexend&display=swap" rel="stylesheet">
   <style>
     :root{
@@ -201,7 +201,7 @@
   <div class="app">
     <header>
       <div class="title-wrap">
-        <h1>Golf Tracker</h1>
+        <h1>golf tracker</h1>
         <p class="lead">quickly log rounds, track skills, and more</p>
       </div>
       <div class="center">
@@ -221,7 +221,7 @@
 
           <div>
             <label for="course">course</label>
-            <input id="course" type="text" />
+            <input id="course" type="text" placeholder="course name" />
           </div>
 
           <div>
@@ -240,8 +240,8 @@
           </div>
 
           <div>
-            <label for="gir">greens in regulation (gir)</label>
-            <input id="gir" type="number" min="0" max="18" />
+            <label for="holes">holes played</label>
+            <input id="holes" type="number" min="0" max="18" />
           </div>
 
           <div>
@@ -270,7 +270,7 @@
                 <th>score</th>
                 <th>putts</th>
                 <th>fairways</th>
-                <th>gir</th>
+                <th>holes played</th>
                 <th>notes</th>
               </tr>
             </thead>
@@ -298,8 +298,8 @@
             <div class="muted">avg putts</div>
           </div>
           <div class="stat">
-            <strong id="girPct">—</strong>
-            <div class="muted">gir %</div>
+            <strong id="avgHoles">—</strong>
+            <div class="muted">avg holes</div>
           </div>
         </div>
       </section>
@@ -329,7 +329,7 @@
           score: document.getElementById('score'),
           putts: document.getElementById('putts'),
           fairways: document.getElementById('fairways'),
-          gir: document.getElementById('gir'),
+          holes: document.getElementById('holes'),
           notes: document.getElementById('notes'),
           addBtn: document.getElementById('addBtn'),
           roundForm: document.getElementById('roundForm'),
@@ -337,7 +337,7 @@
           avgScore: document.getElementById('avgScore'),
           bestScore: document.getElementById('bestScore'),
           avgPutts: document.getElementById('avgPutts'),
-          girPct: document.getElementById('girPct'),
+          avgHoles: document.getElementById('avgHoles'),
           roundCount: document.getElementById('roundCount'),
           clearAll: document.getElementById('clearAll'),
           importSample: document.getElementById('importSample'),
@@ -386,7 +386,7 @@
           score,
           putts: parseInt(this.els.putts.value || 0,10),
           fairways: parseInt(this.els.fairways.value || 0,10),
-          gir: parseInt(this.els.gir.value || 0,10),
+          holes: parseInt(this.els.holes.value || 0,10),
           notes: this.els.notes.value || ''
         };
         // add to start (most recent first)
@@ -430,7 +430,7 @@
             <td>${r.score}</td>
             <td>${r.putts}</td>
             <td>${r.fairways}</td>
-            <td>${r.gir}</td>
+            <td>${r.holes}</td>
             <td>${this.escapeHtml(r.notes).slice(0,60)}</td>
           `;
           // click to remove one round
@@ -457,24 +457,23 @@
           this.els.avgScore.textContent = '—';
           this.els.bestScore.textContent = '—';
           this.els.avgPutts.textContent = '—';
-          this.els.girPct.textContent = '—';
+          this.els.avgHoles.textContent = '—';
           return;
         }
         const scores = list.map(r => r.score);
         const putts = list.map(r => r.putts || 0);
-        const girs = list.map(r => r.gir || 0);
+        const holesList = list.map(r => r.holes || 0);
 
         const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
         const best = Math.min(...scores);
         const avgPutts = (putts.reduce((a,b)=>a+b,0)/putts.length).toFixed(1);
-        const totalHoles = (list.length * 18);
-        const girSum = girs.reduce((a,b)=>a+b,0);
-        const girPct = Math.round((girSum / Math.max(1,totalHoles)) * 100);
+        const totalHolesPlayed = holesList.reduce((a,b)=>a+b,0);
+        const avgHoles = (totalHolesPlayed / list.length).toFixed(1);
 
         this.els.avgScore.textContent = avg;
         this.els.bestScore.textContent = best;
         this.els.avgPutts.textContent = avgPutts;
-        this.els.girPct.textContent = girPct + '%';
+        this.els.avgHoles.textContent = avgHoles;
       },
 
       drawChart(){
@@ -495,8 +494,8 @@
 
         if(this.rounds.length === 0) return;
 
-        // take last 50 rounds (most recent first)
-        const recent = this.rounds.slice(0,100).map(r => r.score).reverse();
+        // take last 12 rounds (most recent first)
+        const recent = this.rounds.slice(0,12).map(r => r.score).reverse();
         const max = Math.max(...recent);
         const min = Math.min(...recent);
         const pad = 8;
@@ -529,9 +528,9 @@
       importSampleData(){
         // small sample so the user sees how it works
         const sample = [
-          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, gir:12, notes:'test: good wind' },
-          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, gir:8, notes:'' },
-          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, gir:10, notes:'new putter' }
+          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, holes:12, notes:'test: good wind' },
+          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, holes:18, notes:'' },
+          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, holes:9, notes:'new putter' }
         ];
         this.rounds = sample.concat(this.rounds);
         this.save();
@@ -556,4 +555,3 @@
   </script>
 </body>
 </html>
-
