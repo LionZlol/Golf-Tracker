@@ -7,12 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg: #0e0e0e;
-      --panel: #111214;
-      --muted: #9aa2a6;
-      --accent: #8fe388;
-      --glass: rgba(255,255,255,0.03);
-      --card-radius: 14px;
+      --bg: #0b0b0b;
+      --panel: #070707; /* darker panel */
+      --muted: #8f9699;
+      --accent: #6ec36a;
+      --glass: rgba(0,0,0,0.45); /* removed bright overlay — darker */
+      --card-radius: 12px;
     }
 
     *{box-sizing:border-box}
@@ -20,8 +20,8 @@
     body{
       margin:0;
       font-family: 'Lexend', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: linear-gradient(180deg,#071018 0%,var(--bg) 100%);
-      color:#e8eef0;
+      background: linear-gradient(180deg,#050608 0%,var(--bg) 100%);
+      color:#dfe8ea;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       padding:18px;
@@ -66,10 +66,10 @@
 
     /* main card */
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      background: var(--panel); /* removed light gradient overlay */
       border-radius:var(--card-radius);
       padding:16px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.7);
       border:1px solid rgba(255,255,255,0.03);
     }
 
@@ -94,12 +94,12 @@
       margin-bottom:6px;
     }
 
-    input[type="number"], input[type="date"], select, textarea{
+    input[type="number"], input[type="date"], input[type="text"], select, textarea{
       width:100%;
       padding:10px 12px;
       border-radius:10px;
       border:1px solid rgba(255,255,255,0.04);
-      background:var(--glass);
+      background:var(--glass); /* darker input bg */
       color: #e8eef0;
       outline:none;
       font-size:14px;
@@ -120,7 +120,7 @@
       border-radius:10px;
       border:0;
       font-weight:600;
-      background:linear-gradient(90deg, var(--accent), #62d77b);
+      background:linear-gradient(90deg, var(--accent), #4fbf5a);
       color:#05210a;
       box-shadow: 0 6px 18px rgba(0,0,0,0.5);
     }
@@ -163,7 +163,7 @@
     .stat{
       padding:12px;
       border-radius:12px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      background:var(--panel);
       text-align:center;
     }
     .stat strong{display:block; font-size:18px; margin-bottom:4px}
@@ -174,7 +174,7 @@
       height:90px;
       display:block;
       border-radius:10px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      background:var(--panel);
     }
 
     /* small utilities */
@@ -201,12 +201,12 @@
   <div class="app">
     <header>
       <div class="title-wrap">
-        <h1>Golf Tracker</h1>
-        <p class="lead">Quickly log rounds, track skills, and more!</p>
+        <h1>golf tracker</h1>
+        <p class="lead">quickly log rounds, track skills, and more</p>
       </div>
       <div class="center">
-        <div class="pill">Rounds: <span id="roundCount">0</span></div>
-        <button id="clearAll" class="ghost" title="clear all saved rounds">Clear</button>
+        <div class="pill">rounds: <span id="roundCount">0</span></div>
+        <button id="clearAll" class="ghost" title="clear all saved rounds">clear</button>
       </div>
     </header>
 
@@ -217,6 +217,11 @@
           <div>
             <label for="date">date</label>
             <input id="date" type="date" class="full" />
+          </div>
+
+          <div>
+            <label for="course">course</label>
+            <input id="course" type="text" placeholder="course name" />
           </div>
 
           <div>
@@ -246,7 +251,6 @@
 
           <div class="full controls">
             <button id="addBtn" type="submit">add round</button>
-            <button id="exportCsv" type="button" class="ghost">export csv</button>
             <button id="importSample" type="button" class="ghost">import sample</button>
           </div>
         </form>
@@ -262,6 +266,7 @@
             <thead>
               <tr>
                 <th>date</th>
+                <th>course</th>
                 <th>score</th>
                 <th>putts</th>
                 <th>fairways</th>
@@ -305,7 +310,7 @@
           <span class="small">sparkline</span>
         </div>
         <canvas id="history"></canvas>
-        <div style="margin-top:8px" class="small">Use this for a neat graph, click a table row to remove it.</div>
+        <div style="margin-top:8px" class="small">use this for a neat graph; click a table row to remove it.</div>
       </section>
     </aside>
   </div>
@@ -320,6 +325,7 @@
         // cache elements
         this.els = {
           date: document.getElementById('date'),
+          course: document.getElementById('course'),
           score: document.getElementById('score'),
           putts: document.getElementById('putts'),
           fairways: document.getElementById('fairways'),
@@ -334,7 +340,6 @@
           girPct: document.getElementById('girPct'),
           roundCount: document.getElementById('roundCount'),
           clearAll: document.getElementById('clearAll'),
-          exportCsv: document.getElementById('exportCsv'),
           importSample: document.getElementById('importSample'),
           canvas: document.getElementById('history')
         };
@@ -358,7 +363,6 @@
           }
         });
 
-        this.els.exportCsv.addEventListener('click', () => this.exportCsv());
         this.els.importSample.addEventListener('click', () => {
           this.importSampleData();
         });
@@ -378,6 +382,7 @@
         const round = {
           id: Date.now(),
           date,
+          course: (this.els.course.value || '').trim(),
           score,
           putts: parseInt(this.els.putts.value || 0,10),
           fairways: parseInt(this.els.fairways.value || 0,10),
@@ -393,7 +398,11 @@
       },
 
       save(){
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.rounds));
+        try{
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.rounds));
+        }catch(e){
+          console.error('save error', e);
+        }
       },
 
       load(){
@@ -417,6 +426,7 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${r.date}</td>
+            <td>${this.escapeHtml(r.course || '')}</td>
             <td>${r.score}</td>
             <td>${r.putts}</td>
             <td>${r.fairways}</td>
@@ -480,13 +490,13 @@
 
         // background
         ctx.clearRect(0,0,w,h);
-        ctx.fillStyle = 'rgba(255,255,255,0.02)';
+        ctx.fillStyle = 'rgba(0,0,0,0.06)';
         ctx.fillRect(0,0,w,h);
 
         if(this.rounds.length === 0) return;
 
-        // take last 12 rounds (most recent first)
-        const recent = this.rounds.slice(0,12).map(r => r.score).reverse();
+        // take last 50 rounds (most recent first)
+        const recent = this.rounds.slice(0,100).map(r => r.score).reverse();
         const max = Math.max(...recent);
         const min = Math.min(...recent);
         const pad = 8;
@@ -495,7 +505,7 @@
 
         ctx.beginPath();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgba(143,227,136,0.95)';
+        ctx.strokeStyle = 'rgba(110,195,106,0.95)';
         ctx.lineJoin = 'round';
         ctx.lineCap = 'round';
 
@@ -516,33 +526,12 @@
         ctx.stroke();
       },
 
-      exportCsv(){
-        if(!this.rounds.length){
-          alert('no rounds to export');
-          return;
-        }
-        const rows = [
-          ['date','score','putts','fairways','gir','notes'],
-          ...this.rounds.map(r => [r.date, r.score, r.putts, r.fairways, r.gir, `"${(r.notes||'').replace(/"/g,'""')}"`])
-        ];
-        const csv = rows.map(r => r.join(',')).join('\n');
-        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'golf-rounds.csv';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      },
-
       importSampleData(){
         // small sample so the user sees how it works
         const sample = [
-          { id: Date.now()+1, date: this.iso(-2), score:78, putts:30, fairways:9, gir:12, notes:'test: good wind' },
-          { id: Date.now()+2, date: this.iso(-9), score:85, putts:34, fairways:6, gir:8, notes:'' },
-          { id: Date.now()+3, date: this.iso(-16), score:81, putts:32, fairways:7, gir:10, notes:'new putter' }
+          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, gir:12, notes:'test: good wind' },
+          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, gir:8, notes:'' },
+          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, gir:10, notes:'new putter' }
         ];
         this.rounds = sample.concat(this.rounds);
         this.save();
