@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Golf Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0e0e0e;
+      --panel: #111214;
+      --muted: #9aa2a6;
+      --accent: #8fe388;
+      --glass: rgba(255,255,255,0.03);
+      --card-radius: 14px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: 'Lexend', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg,#071018 0%,var(--bg) 100%);
+      color:#e8eef0;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:18px;
+    }
+
+    /* layout */
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:18px;
+      align-items:start;
+    }
+
+    header{
+      grid-column:1 / -1;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:6px;
+    }
+
+    .title-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    h1{
+      margin:0;
+      font-size:28px;
+      font-weight:700;
+      letter-spacing:-0.5px;
+    }
+    p.lead{
+      margin:0;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* main card */
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--card-radius);
+      padding:16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    /* left column content */
+    .left{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    form.row{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+      align-items:end;
+    }
+
+    label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    input[type="number"], input[type="date"], select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:var(--glass);
+      color: #e8eef0;
+      outline:none;
+      font-size:14px;
+    }
+
+    textarea{min-height:54px; resize:vertical}
+
+    .full{grid-column:1 / -1}
+
+    .controls{
+      display:flex;
+      gap:8px;
+      margin-top:6px;
+    }
+    button{
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:10px;
+      border:0;
+      font-weight:600;
+      background:linear-gradient(90deg, var(--accent), #62d77b);
+      color:#05210a;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    }
+    button.ghost{
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    /* table */
+    .table-wrap{
+      overflow-x:auto;
+      margin-top:6px;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    th,td{
+      text-align:left;
+      padding:10px 8px;
+      border-bottom:1px dashed rgba(255,255,255,0.03);
+    }
+    th{color:var(--muted); font-weight:600; font-size:12px}
+
+    /* right column */
+    .right{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+    }
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(2,1fr);
+      gap:8px;
+    }
+    .stat{
+      padding:12px;
+      border-radius:12px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      text-align:center;
+    }
+    .stat strong{display:block; font-size:18px; margin-bottom:4px}
+    .muted{color:var(--muted); font-size:12px}
+
+    canvas#history{
+      width:100%;
+      height:90px;
+      display:block;
+      border-radius:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    }
+
+    /* small utilities */
+    .small{font-size:12px; color:var(--muted)}
+    .center{display:flex; align-items:center; gap:8px}
+    .pill{padding:6px 8px; border-radius:999px; background:rgba(255,255,255,0.02); font-size:12px; color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:980px){
+      .app{grid-template-columns: 1fr; padding-bottom:60px}
+      .right{order:2}
+    }
+
+    @media (max-width:520px){
+      h1{font-size:22px}
+      .lead{font-size:12px}
+      form.row{grid-template-columns: 1fr}
+      .stats-grid{grid-template-columns: 1fr 1fr}
+      button{padding:10px}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title-wrap">
+        <h1>Golf Tracker</h1>
+        <p class="lead">Quickly log rounds, track skills, and more!</p>
+      </div>
+      <div class="center">
+        <div class="pill">Rounds: <span id="roundCount">0</span></div>
+        <button id="clearAll" class="ghost" title="clear all saved rounds">Clear</button>
+      </div>
+    </header>
+
+    <!-- left (main) -->
+    <main class="left">
+      <section class="card">
+        <form id="roundForm" class="row" autocomplete="off">
+          <div>
+            <label for="date">date</label>
+            <input id="date" type="date" class="full" />
+          </div>
+
+          <div>
+            <label for="score">score</label>
+            <input id="score" type="number" min="1" max="200" />
+          </div>
+
+          <div>
+            <label for="putts">putts</label>
+            <input id="putts" type="number" min="0" max="99" />
+          </div>
+
+          <div>
+            <label for="fairways">fairways hit</label>
+            <input id="fairways" type="number" min="0" max="18" />
+          </div>
+
+          <div>
+            <label for="gir">greens in regulation (gir)</label>
+            <input id="gir" type="number" min="0" max="18" />
+          </div>
+
+          <div>
+            <label for="notes">notes</label>
+            <textarea id="notes" placeholder="optional: club experiment, wind, etc"></textarea>
+          </div>
+
+          <div class="full controls">
+            <button id="addBtn" type="submit">add round</button>
+            <button id="exportCsv" type="button" class="ghost">export csv</button>
+            <button id="importSample" type="button" class="ghost">import sample</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>round history</strong>
+          <span class="small">most recent first</span>
+        </div>
+        <div class="table-wrap">
+          <table id="roundTable" aria-live="polite">
+            <thead>
+              <tr>
+                <th>date</th>
+                <th>score</th>
+                <th>putts</th>
+                <th>fairways</th>
+                <th>gir</th>
+                <th>notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- right (side) -->
+    <aside class="right">
+      <section class="card">
+        <strong>quick stats</strong>
+        <div class="stats-grid" style="margin-top:10px">
+          <div class="stat">
+            <strong id="avgScore">—</strong>
+            <div class="muted">avg score</div>
+          </div>
+          <div class="stat">
+            <strong id="bestScore">—</strong>
+            <div class="muted">best score</div>
+          </div>
+          <div class="stat">
+            <strong id="avgPutts">—</strong>
+            <div class="muted">avg putts</div>
+          </div>
+          <div class="stat">
+            <strong id="girPct">—</strong>
+            <div class="muted">gir %</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>score history</strong>
+          <span class="small">sparkline</span>
+        </div>
+        <canvas id="history"></canvas>
+        <div style="margin-top:8px" class="small">Use this for a neat graph, click a table row to remove it.</div>
+      </section>
+    </aside>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'golftracker.rounds.v1';
+
+    const ui = {
+      rounds: [],
+      els: {},
+      init() {
+        // cache elements
+        this.els = {
+          date: document.getElementById('date'),
+          score: document.getElementById('score'),
+          putts: document.getElementById('putts'),
+          fairways: document.getElementById('fairways'),
+          gir: document.getElementById('gir'),
+          notes: document.getElementById('notes'),
+          addBtn: document.getElementById('addBtn'),
+          roundForm: document.getElementById('roundForm'),
+          tbody: document.querySelector('#roundTable tbody'),
+          avgScore: document.getElementById('avgScore'),
+          bestScore: document.getElementById('bestScore'),
+          avgPutts: document.getElementById('avgPutts'),
+          girPct: document.getElementById('girPct'),
+          roundCount: document.getElementById('roundCount'),
+          clearAll: document.getElementById('clearAll'),
+          exportCsv: document.getElementById('exportCsv'),
+          importSample: document.getElementById('importSample'),
+          canvas: document.getElementById('history')
+        };
+
+        // defaults
+        if(!this.els.date.value){
+          this.els.date.valueAsDate = new Date();
+        }
+
+        // events
+        this.els.roundForm.addEventListener('submit', e => {
+          e.preventDefault();
+          this.addRoundFromForm();
+        });
+
+        this.els.clearAll.addEventListener('click', () => {
+          if(confirm('clear all saved rounds?')){
+            this.rounds = [];
+            this.save();
+            this.render();
+          }
+        });
+
+        this.els.exportCsv.addEventListener('click', () => this.exportCsv());
+        this.els.importSample.addEventListener('click', () => {
+          this.importSampleData();
+        });
+
+        // load
+        this.load();
+        this.render();
+      },
+
+      addRoundFromForm(){
+        const date = this.els.date.value || new Date().toISOString().slice(0,10);
+        const score = parseInt(this.els.score.value,10);
+        if(!score || score <= 0) {
+          alert('please enter a valid score');
+          return;
+        }
+        const round = {
+          id: Date.now(),
+          date,
+          score,
+          putts: parseInt(this.els.putts.value || 0,10),
+          fairways: parseInt(this.els.fairways.value || 0,10),
+          gir: parseInt(this.els.gir.value || 0,10),
+          notes: this.els.notes.value || ''
+        };
+        // add to start (most recent first)
+        this.rounds.unshift(round);
+        this.save();
+        this.render();
+        this.els.roundForm.reset();
+        this.els.date.valueAsDate = new Date();
+      },
+
+      save(){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.rounds));
+      },
+
+      load(){
+        const raw = localStorage.getItem(STORAGE_KEY);
+        try{
+          const parsed = raw ? JSON.parse(raw) : [];
+          if(Array.isArray(parsed)) this.rounds = parsed;
+        }catch(e){
+          console.error('load error',e);
+          this.rounds = [];
+        }
+      },
+
+      render(){
+        // update count
+        this.els.roundCount.textContent = this.rounds.length;
+
+        // render table
+        this.els.tbody.innerHTML = '';
+        for(const r of this.rounds){
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.date}</td>
+            <td>${r.score}</td>
+            <td>${r.putts}</td>
+            <td>${r.fairways}</td>
+            <td>${r.gir}</td>
+            <td>${this.escapeHtml(r.notes).slice(0,60)}</td>
+          `;
+          // click to remove one round
+          tr.addEventListener('click', () => {
+            if(confirm('remove this round?')) {
+              this.rounds = this.rounds.filter(x => x.id !== r.id);
+              this.save();
+              this.render();
+            }
+          });
+          this.els.tbody.appendChild(tr);
+        }
+
+        // stats
+        this.updateStats();
+
+        // chart
+        this.drawChart();
+      },
+
+      updateStats(){
+        const list = this.rounds;
+        if(!list.length){
+          this.els.avgScore.textContent = '—';
+          this.els.bestScore.textContent = '—';
+          this.els.avgPutts.textContent = '—';
+          this.els.girPct.textContent = '—';
+          return;
+        }
+        const scores = list.map(r => r.score);
+        const putts = list.map(r => r.putts || 0);
+        const girs = list.map(r => r.gir || 0);
+
+        const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+        const best = Math.min(...scores);
+        const avgPutts = (putts.reduce((a,b)=>a+b,0)/putts.length).toFixed(1);
+        const totalHoles = (list.length * 18);
+        const girSum = girs.reduce((a,b)=>a+b,0);
+        const girPct = Math.round((girSum / Math.max(1,totalHoles)) * 100);
+
+        this.els.avgScore.textContent = avg;
+        this.els.bestScore.textContent = best;
+        this.els.avgPutts.textContent = avgPutts;
+        this.els.girPct.textContent = girPct + '%';
+      },
+
+      drawChart(){
+        const canvas = this.els.canvas;
+        const ctx = canvas.getContext('2d');
+        // resize for device pixel ratio for crisp lines
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.clientWidth;
+        const h = canvas.clientHeight;
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+        ctx.scale(dpr, dpr);
+
+        // background
+        ctx.clearRect(0,0,w,h);
+        ctx.fillStyle = 'rgba(255,255,255,0.02)';
+        ctx.fillRect(0,0,w,h);
+
+        if(this.rounds.length === 0) return;
+
+        // take last 12 rounds (most recent first)
+        const recent = this.rounds.slice(0,12).map(r => r.score).reverse();
+        const max = Math.max(...recent);
+        const min = Math.min(...recent);
+        const pad = 8;
+        const usableW = w - pad*2;
+        const usableH = h - pad*2;
+
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(143,227,136,0.95)';
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        recent.forEach((val,i) => {
+          const x = pad + (i / (recent.length - 1 || 1)) * usableW;
+          // normalize (higher score lower on canvas)
+          const t = (val - min) / Math.max(1, (max - min));
+          const y = pad + (1 - t) * usableH;
+          if(i === 0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+          // draw small dot
+          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.beginPath();
+          ctx.arc(x,y,3,0,Math.PI*2);
+          ctx.fill();
+        });
+
+        ctx.stroke();
+      },
+
+      exportCsv(){
+        if(!this.rounds.length){
+          alert('no rounds to export');
+          return;
+        }
+        const rows = [
+          ['date','score','putts','fairways','gir','notes'],
+          ...this.rounds.map(r => [r.date, r.score, r.putts, r.fairways, r.gir, `"${(r.notes||'').replace(/"/g,'""')}"`])
+        ];
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'golf-rounds.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      },
+
+      importSampleData(){
+        // small sample so the user sees how it works
+        const sample = [
+          { id: Date.now()+1, date: this.iso(-2), score:78, putts:30, fairways:9, gir:12, notes:'test: good wind' },
+          { id: Date.now()+2, date: this.iso(-9), score:85, putts:34, fairways:6, gir:8, notes:'' },
+          { id: Date.now()+3, date: this.iso(-16), score:81, putts:32, fairways:7, gir:10, notes:'new putter' }
+        ];
+        this.rounds = sample.concat(this.rounds);
+        this.save();
+        this.render();
+      },
+
+      iso(daysAgo=0){
+        const d = new Date();
+        d.setDate(d.getDate() + daysAgo);
+        return d.toISOString().slice(0,10);
+      },
+
+      escapeHtml(s = ''){
+        return String(s).replace(/[&<>"']/g, function(m){
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+        });
+      }
+    };
+
+    // init
+    ui.init();
+  </script>
+</body>
+</html>
