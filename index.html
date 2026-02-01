@@ -156,7 +156,7 @@
 
               <div class="holes-controls">
                 <button id="clearHoles" type="button" class="ghost">clear holes</button>
-                <button id="autoFillPars" type="button" class="ghost">set pars (3/4/5)</button>
+                <button id="scoreCardBtn" type="button" class="ghost">score card</button>
                 <div style="flex:1"></div>
                 <div class="small">Totals: <span id="holesSummary">0 holes / 0 score / 0 putts / 0 fw</span></div>
               </div>
@@ -256,7 +256,7 @@
           holesContainer: document.getElementById('holesContainer'),
           clearHoles: document.getElementById('clearHoles'),
           holesSummary: document.getElementById('holesSummary'),
-          autoFillPars: document.getElementById('autoFillPars')
+          scoreCardBtn: document.getElementById('scoreCardBtn')
         };
 
         if(!this.els.date.value) this.els.date.valueAsDate = new Date();
@@ -293,13 +293,9 @@
           }
         });
 
-        this.els.autoFillPars.addEventListener('click', () => {
-          const rows = this.els.holesContainer.querySelectorAll('.holes-row');
-          rows.forEach((row,i) => {
-            const parInput = row.querySelector('.par-input');
-            if(parInput) parInput.value = Math.floor(Math.random() * 3) + 3;
-          });
-          this.updateHoleAggregates();
+        // score card button: copy hole mode totals to main editor and snapshot breakdown
+        this.els.scoreCardBtn.addEventListener('click', () => {
+          this.applyHoleTotalsToForm();
         });
 
         this.load();
@@ -336,7 +332,7 @@
           `;
           container.appendChild(row);
 
-          // wire events: only update aggregates (which will only write holes played to main form)
+          // wire events: update aggregates
           const scoreInput = row.querySelector('.score-input');
           const puttInput = row.querySelector('.putt-input');
           const fwInput = row.querySelector('.fw-input');
@@ -388,13 +384,41 @@
         // show totals in hole mode summary
         this.els.holesSummary.textContent = `${holesWithScore} holes / ${totalScore} score / ${totalPutts} putts / ${totalFW} fw`;
 
-        // only update the main "holes played" field (per your request)
+        // only update the main "holes played" field while hole mode is active
         if(this.els.holeModeToggle.checked){
           this.els.holes.value = holesWithScore || '';
         }
 
-        // keep a snapshot for storing with the round
+        // keep a snapshot for storing with the round or applying
         this.currentHoleBreakdown = breakdown;
+      },
+
+      // copies hole mode totals and snapshot to the main editor
+      applyHoleTotalsToForm(){
+        // ensure aggregates are up to date
+        this.updateHoleAggregates();
+        const bd = this.currentHoleBreakdown;
+        if(!bd || !bd.length){
+          alert('no hole data available');
+          return;
+        }
+
+        const totalScore = bd.reduce((s, h) => s + (h.score || 0), 0);
+        const totalPutts = bd.reduce((s, h) => s + (h.putts || 0), 0);
+        const totalFW = bd.reduce((s, h) => s + (h.fairway ? 1 : 0), 0);
+        const holesWithScore = bd.filter(h => Number.isInteger(h.score)).length;
+
+        // write to main editor fields
+        this.els.score.value = totalScore || '';
+        this.els.putts.value = totalPutts || '';
+        this.els.fairways.value = totalFW || '';
+        this.els.holes.value = holesWithScore || '';
+
+        // keep the hole breakdown so adding the round saves it
+        this.currentHoleBreakdown = bd.slice(); // clone
+
+        // small user feedback
+        alert('score card copied to main editor');
       },
 
       addRoundFromForm(){
@@ -589,4 +613,3 @@
   </script>
 </body>
 </html>
-
