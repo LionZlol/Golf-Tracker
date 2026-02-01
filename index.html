@@ -127,21 +127,11 @@
           </div>
 
           <div>
-            <label for="gameMode">game mode</label>
-            <select id="gameMode">
-              <option value="">manual</option>
-              <option value="18 hole">18 hole</option>
-              <option value="9 hole">9 hole</option>
-            </select>
-          </div>
-
-          <div>
             <label>&nbsp;</label>
             <div style="display:flex; gap:8px; align-items:center">
               <label class="small" style="margin:0">
                 <input id="holeModeToggle" type="checkbox" /> Hole Mode
               </label>
-              <button id="applyHoleTotals" type="button" class="ghost">apply holes to form</button>
             </div>
           </div>
 
@@ -191,7 +181,6 @@
                 <th>putts</th>
                 <th>fairways</th>
                 <th>holes played</th>
-                <th>game mode</th>
                 <th>notes</th>
               </tr>
             </thead>
@@ -265,16 +254,12 @@
           holeModeToggle: document.getElementById('holeModeToggle'),
           holesPanel: document.getElementById('holesPanel'),
           holesContainer: document.getElementById('holesContainer'),
-          applyHoleTotals: document.getElementById('applyHoleTotals'),
           clearHoles: document.getElementById('clearHoles'),
           holesSummary: document.getElementById('holesSummary'),
-          gameMode: document.getElementById('gameMode'),
           autoFillPars: document.getElementById('autoFillPars')
         };
 
-        if(!this.els.date.value){
-          this.els.date.valueAsDate = new Date();
-        }
+        if(!this.els.date.value) this.els.date.valueAsDate = new Date();
 
         this.els.roundForm.addEventListener('submit', e => {
           e.preventDefault();
@@ -293,38 +278,12 @@
           this.importSampleData();
         });
 
-        // when game mode changes, update hole rows count if hole mode is visible
-        this.els.gameMode.addEventListener('change', () => {
-          const count = this.parseGameModeCount(this.els.gameMode.value);
-          if(this.els.holeModeToggle.checked){
-            this.buildHoles(count);
-          } else {
-            // still update internal holeCount so toggling on uses the count
-            this.holeCount = count;
-          }
-        });
-
-        // hole mode toggle
+        // hole mode toggle: build 18 holes when toggled on
         this.els.holeModeToggle.addEventListener('change', e => {
           const on = e.target.checked;
           this.els.holesPanel.style.display = on ? 'block' : 'none';
           this.els.holesPanel.setAttribute('aria-hidden', !on);
-          // lock or unlock main inputs when hole mode active
-          ['score','putts','fairways','holes'].forEach(id => {
-            const el = document.getElementById(id);
-            if(on) el.setAttribute('readonly','readonly');
-            else el.removeAttribute('readonly');
-          });
-          // build holes if turning on
-          if(on) {
-            const count = this.parseGameModeCount(this.els.gameMode.value);
-            this.buildHoles(count);
-          }
-        });
-
-        // apply button now copies hole totals to main form (only when clicked)
-        this.els.applyHoleTotals.addEventListener('click', () => {
-          this.applyHoleTotalsToForm();
+          if(on) this.buildHoles(this.holeCount);
         });
 
         this.els.clearHoles.addEventListener('click', () => {
@@ -347,20 +306,10 @@
         this.render();
       },
 
-      parseGameModeCount(val){
-        if(!val) return 18; // manual default to 18 fields
-        if(val.match(/18/)) return 18;
-        if(val.match(/9/)) return 9;
-        // try to parse number from "Partial: N" or similar
-        const m = val.match(/(\d{1,2})/);
-        if(m) return Math.min(18, Math.max(1, parseInt(m[1],10)));
-        return 18;
-      },
-
       buildHoles(count = 18){
         this.holeCount = count;
         const container = this.els.holesContainer;
-        // preserve existing data as much as possible by reading current rows
+        // preserve existing if possible
         const existing = Array.from(container.querySelectorAll('.holes-row')).map(row => ({
           par: row.querySelector('.par-input')?.value || '',
           score: row.querySelector('.score-input')?.value || '',
@@ -387,7 +336,7 @@
           `;
           container.appendChild(row);
 
-          // wire events
+          // wire events: only update aggregates (which will only write holes played to main form)
           const scoreInput = row.querySelector('.score-input');
           const puttInput = row.querySelector('.putt-input');
           const fwInput = row.querySelector('.fw-input');
@@ -400,7 +349,6 @@
           parInput.addEventListener('input', handler);
         }
 
-        // recalc aggregates after building
         this.updateHoleAggregates();
       },
 
@@ -437,57 +385,16 @@
           breakdown.push({ hole: i+1, par, score: Number.isInteger(s) ? s : null, putts: Number.isInteger(p) ? p : null, fairway: !!fw });
         });
 
-        // update summary text only
+        // show totals in hole mode summary
         this.els.holesSummary.textContent = `${holesWithScore} holes / ${totalScore} score / ${totalPutts} putts / ${totalFW} fw`;
 
-        // store a temporary currentHoleBreakdown so apply can use it
+        // only update the main "holes played" field (per your request)
+        if(this.els.holeModeToggle.checked){
+          this.els.holes.value = holesWithScore || '';
+        }
+
+        // keep a snapshot for storing with the round
         this.currentHoleBreakdown = breakdown;
-        // do NOT write to main form fields until user clicks apply
-      },
-
-      applyHoleTotalsToForm(){
-        // require a breakdown to exist
-        if(!this.currentHoleBreakdown) {
-          alert('no hole data to apply');
-          return;
-        }
-        // compute totals from breakdown
-        const bd = this.currentHoleBreakdown;
-        const totalScore = bd.reduce((s, h) => s + (h.score || 0), 0);
-        const totalPutts = bd.reduce((s, h) => s + (h.putts || 0), 0);
-        const totalFW = bd.reduce((s, h) => s + (h.fairway ? 1 : 0), 0);
-        const holesWithScore = bd.filter(h => Number.isInteger(h.score)).length;
-
-        // apply to main form fields
-        this.els.score.value = totalScore || '';
-        this.els.putts.value = totalPutts || '';
-        this.els.fairways.value = totalFW || '';
-        this.els.holes.value = holesWithScore || '';
-
-        // compute a gameMode string consistent with options
-        let gm = '';
-        if(holesWithScore >= 18) gm = '18 hole';
-        else if(holesWithScore >= 9) gm = '9 hole';
-        else if(holesWithScore > 0) gm = `Partial: ${holesWithScore}`;
-
-        // set select option or insert a temporary custom option
-        const opts = Array.from(this.els.gameMode.options).map(o => o.value);
-        if(opts.includes(gm)) this.els.gameMode.value = gm;
-        else {
-          let custom = this.els.gameMode.querySelector('option[data-custom="true"]');
-          if(!custom){
-            custom = document.createElement('option');
-            custom.setAttribute('data-custom','true');
-            this.els.gameMode.appendChild(custom);
-          }
-          custom.value = gm;
-          custom.textContent = gm || 'manual';
-          this.els.gameMode.value = gm;
-        }
-
-        // snapshot the hole breakdown onto currentHoleBreakdown for storing with round
-        // (already present in this.currentHoleBreakdown)
-        alert('hole totals applied to form');
       },
 
       addRoundFromForm(){
@@ -506,7 +413,6 @@
           putts: parseInt(this.els.putts.value || 0,10),
           fairways: parseInt(this.els.fairways.value || 0,10),
           holes: holesPlayed,
-          gameMode: (this.els.gameMode.value || (holesPlayed >=18 ? '18 hole' : holesPlayed >=9 ? '9 hole' : (holesPlayed>0? `${holesPlayed} hole` : ''))),
           notes: this.els.notes.value || '',
           holesBreakdown: this.currentHoleBreakdown || null
         };
@@ -516,10 +422,7 @@
         this.els.roundForm.reset();
         this.els.date.valueAsDate = new Date();
         this.currentHoleBreakdown = null;
-        // if hole mode still active, rebuild empty set (uses the holeCount)
-        if(this.els.holeModeToggle.checked) {
-          this.buildHoles(this.holeCount);
-        }
+        if(this.els.holeModeToggle.checked) this.buildHoles(this.holeCount);
       },
 
       save(){
@@ -554,7 +457,6 @@
             <td>${r.putts}</td>
             <td>${r.fairways}</td>
             <td>${r.holes}</td>
-            <td>${this.escapeHtml(r.gameMode || '')}</td>
             <td>${this.escapeHtml(r.notes || '').slice(0,60)}</td>
           `;
           tr.addEventListener('click', () => {
@@ -612,7 +514,6 @@
 
         if(this.rounds.length === 0) return;
 
-        // most recent first, take last 12, then reverse so left = oldest
         const recent = this.rounds.slice(0,12).map(r => r.score).reverse();
         const max = Math.max(...recent);
         const min = Math.min(...recent);
@@ -620,7 +521,7 @@
         const usableW = w - pad*2;
         const usableH = h - pad*2;
 
-        // draw connected line
+        // connected line
         ctx.beginPath();
         ctx.lineWidth = 2.5;
         ctx.lineJoin = 'round';
@@ -636,21 +537,18 @@
         });
         ctx.stroke();
 
-        // draw dots with older dots brighter
+        // dots: older dots brighter
         recent.forEach((val,i) => {
           const x = pad + (i / (recent.length - 1 || 1)) * usableW;
           const t = (val - min) / Math.max(1, (max - min));
           const y = pad + (1 - t) * usableH;
 
-          // alpha scale: oldest (i=0) most opaque; newest least
           const alpha = recent.length === 1 ? 1 : 0.35 + 0.65 * (1 - (i / (recent.length - 1)));
           ctx.beginPath();
-          // outer glow dot (subtle)
           ctx.fillStyle = `rgba(255,255,255,${Math.min(0.06 + alpha*0.2,0.18)})`;
           ctx.arc(x,y,6,0,Math.PI*2);
           ctx.fill();
 
-          // inner dot
           ctx.beginPath();
           ctx.fillStyle = `rgba(110,195,106,${Math.min(0.45 + alpha*0.55,1)})`;
           ctx.arc(x,y,3.5,0,Math.PI*2);
@@ -660,9 +558,9 @@
 
       importSampleData(){
         const sample = [
-          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, holes:12, notes:'test: good wind', gameMode:'Partial: 12', holesBreakdown: null },
-          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, holes:18, notes:'', gameMode:'18 hole', holesBreakdown: null },
-          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, holes:9, notes:'new putter', gameMode:'9 hole', holesBreakdown: null }
+          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, holes:12, notes:'test: good wind', holesBreakdown: null },
+          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, holes:18, notes:'', holesBreakdown: null },
+          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, holes:9, notes:'new putter', holesBreakdown: null }
         ];
         this.rounds = sample.concat(this.rounds);
         this.save();
