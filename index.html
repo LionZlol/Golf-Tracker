@@ -8,10 +8,10 @@
   <style>
     :root{
       --bg: #0b0b0b;
-      --panel: #070707; /* darker panel */
+      --panel: #070707;
       --muted: #8f9699;
       --accent: #6ec36a;
-      --glass: rgba(0,0,0,0.45); /* removed bright overlay — darker */
+      --glass: rgba(0,0,0,0.45);
       --card-radius: 12px;
     }
 
@@ -27,7 +27,6 @@
       padding:18px;
     }
 
-    /* layout */
     .app{
       max-width:1100px;
       margin:0 auto;
@@ -46,155 +45,65 @@
       margin-bottom:6px;
     }
 
-    .title-wrap{
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-    }
+    .title-wrap{ display:flex; flex-direction:column; gap:4px; }
+    h1{ margin:0; font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+    p.lead{ margin:0; color:var(--muted); font-size:13px; }
 
-    h1{
-      margin:0;
-      font-size:28px;
-      font-weight:700;
-      letter-spacing:-0.5px;
-    }
-    p.lead{
-      margin:0;
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    /* main card */
     .card{
-      background: var(--panel); /* removed light gradient overlay */
+      background: var(--panel);
       border-radius:var(--card-radius);
       padding:16px;
       box-shadow: 0 8px 22px rgba(0,0,0,0.7);
       border:1px solid rgba(255,255,255,0.03);
     }
 
-    /* left column content */
-    .left{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
-    form.row{
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap:10px;
-      align-items:end;
-    }
-
-    label{
-      display:block;
-      font-size:12px;
-      color:var(--muted);
-      margin-bottom:6px;
-    }
-
+    .left{ display:flex; flex-direction:column; gap:12px; }
+    form.row{ display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; align-items:end; }
+    label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
     input[type="number"], input[type="date"], input[type="text"], select, textarea{
       width:100%;
       padding:10px 12px;
       border-radius:10px;
       border:1px solid rgba(255,255,255,0.04);
-      background:var(--glass); /* darker input bg */
+      background:var(--glass);
       color: #e8eef0;
       outline:none;
       font-size:14px;
     }
-
     textarea{min-height:54px; resize:vertical}
-
     .full{grid-column:1 / -1}
+    .controls{ display:flex; gap:8px; margin-top:6px; }
+    button{ cursor:pointer; padding:10px 12px; border-radius:10px; border:0; font-weight:600; background:linear-gradient(90deg, var(--accent), #4fbf5a); color:#05210a; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+    button.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03); }
 
-    .controls{
-      display:flex;
-      gap:8px;
-      margin-top:6px;
-    }
-    button{
-      cursor:pointer;
-      padding:10px 12px;
-      border-radius:10px;
-      border:0;
-      font-weight:600;
-      background:linear-gradient(90deg, var(--accent), #4fbf5a);
-      color:#05210a;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
-    }
-    button.ghost{
-      background:transparent;
-      color:var(--muted);
-      border:1px solid rgba(255,255,255,0.03);
-    }
+    .table-wrap{ overflow-x:auto; margin-top:6px; }
+    table{ width:100%; border-collapse:collapse; font-size:13px; }
+    th,td{ text-align:left; padding:10px 8px; border-bottom:1px dashed rgba(255,255,255,0.03); }
+    th{ color:var(--muted); font-weight:600; font-size:12px }
 
-    /* table */
-    .table-wrap{
-      overflow-x:auto;
-      margin-top:6px;
-    }
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:13px;
-    }
-    th,td{
-      text-align:left;
-      padding:10px 8px;
-      border-bottom:1px dashed rgba(255,255,255,0.03);
-    }
-    th{color:var(--muted); font-weight:600; font-size:12px}
+    .right{ display:flex; flex-direction:column; gap:12px; position:relative; }
+    .stats-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:8px; }
+    .stat{ padding:12px; border-radius:12px; background:var(--panel); text-align:center; }
+    .stat strong{ display:block; font-size:18px; margin-bottom:4px }
+    .muted{ color:var(--muted); font-size:12px }
 
-    /* right column */
-    .right{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      position:relative;
-    }
+    canvas#history{ width:100%; height:90px; display:block; border-radius:10px; background:var(--panel); }
 
-    .stats-grid{
-      display:grid;
-      grid-template-columns: repeat(2,1fr);
-      gap:8px;
-    }
-    .stat{
-      padding:12px;
-      border-radius:12px;
-      background:var(--panel);
-      text-align:center;
-    }
-    .stat strong{display:block; font-size:18px; margin-bottom:4px}
-    .muted{color:var(--muted); font-size:12px}
+    .small{ font-size:12px; color:var(--muted) }
+    .center{ display:flex; align-items:center; gap:8px }
+    .pill{ padding:6px 8px; border-radius:999px; background:rgba(255,255,255,0.02); font-size:12px; color:var(--muted) }
 
-    canvas#history{
-      width:100%;
-      height:90px;
-      display:block;
-      border-radius:10px;
-      background:var(--panel);
-    }
+    /* holes panel */
+    .holes-panel{ margin-top:12px; display:none; max-height:360px; overflow:auto; border-radius:10px; padding:8px; background:rgba(255,255,255,0.02); }
+    .holes-row{ display:grid; grid-template-columns: 40px 1fr 1fr 80px; gap:8px; align-items:center; padding:6px 6px; border-bottom:1px solid rgba(255,255,255,0.02); }
+    .holes-row:last-child{ border-bottom:0 }
+    .hole-label{ font-weight:700; color:var(--muted); font-size:12px; text-align:center }
 
-    /* small utilities */
-    .small{font-size:12px; color:var(--muted)}
-    .center{display:flex; align-items:center; gap:8px}
-    .pill{padding:6px 8px; border-radius:999px; background:rgba(255,255,255,0.02); font-size:12px; color:var(--muted)}
+    .holes-controls{ display:flex; gap:8px; margin-top:8px; }
 
     /* responsive */
-    @media (max-width:980px){
-      .app{grid-template-columns: 1fr; padding-bottom:60px}
-      .right{order:2}
-    }
-
-    @media (max-width:520px){
-      h1{font-size:22px}
-      .lead{font-size:12px}
-      form.row{grid-template-columns: 1fr}
-      .stats-grid{grid-template-columns: 1fr 1fr}
-      button{padding:10px}
-    }
+    @media (max-width:980px){ .app{ grid-template-columns: 1fr; padding-bottom:60px } .right{ order:2 } }
+    @media (max-width:520px){ h1{font-size:22px} .lead{font-size:12px} form.row{grid-template-columns: 1fr} .stats-grid{grid-template-columns: 1fr 1fr} button{padding:10px} }
   </style>
 </head>
 <body>
@@ -210,7 +119,6 @@
       </div>
     </header>
 
-    <!-- left (main) -->
     <main class="left">
       <section class="card">
         <form id="roundForm" class="row" autocomplete="off">
@@ -245,6 +153,25 @@
           </div>
 
           <div>
+            <label for="gameMode">game mode</label>
+            <select id="gameMode">
+              <option value="">manual</option>
+              <option value="18 hole">18 hole</option>
+              <option value="9 hole">9 hole</option>
+            </select>
+          </div>
+
+          <div>
+            <label>&nbsp;</label>
+            <div style="display:flex; gap:8px; align-items:center">
+              <label class="small" style="margin:0">
+                <input id="holeModeToggle" type="checkbox" /> Hole Mode
+              </label>
+              <button id="applyHoleTotals" type="button" class="ghost">apply holes to form</button>
+            </div>
+          </div>
+
+          <div class="full">
             <label for="notes">notes</label>
             <textarea id="notes" placeholder="optional: club experiment, wind, etc"></textarea>
           </div>
@@ -253,6 +180,27 @@
             <button id="addBtn" type="submit">add round</button>
             <button id="importSample" type="button" class="ghost">import sample</button>
           </div>
+
+          <div class="full">
+            <div id="holesPanel" class="holes-panel" aria-hidden="true">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <strong>Hole Mode</strong>
+                <div class="small">enter per-hole score, putts, and fairway</div>
+              </div>
+
+              <div id="holesContainer">
+                <!-- rows inserted here -->
+              </div>
+
+              <div class="holes-controls">
+                <button id="clearHoles" type="button" class="ghost">clear holes</button>
+                <button id="autoFillPars" type="button" class="ghost">set pars (3/4/5)</button>
+                <div style="flex:1"></div>
+                <div class="small">Totals: <span id="holesSummary">0 holes / 0 score / 0 putts / 0 fw</span></div>
+              </div>
+            </div>
+          </div>
+
         </form>
       </section>
 
@@ -271,6 +219,7 @@
                 <th>putts</th>
                 <th>fairways</th>
                 <th>holes played</th>
+                <th>game mode</th>
                 <th>notes</th>
               </tr>
             </thead>
@@ -280,25 +229,24 @@
       </section>
     </main>
 
-    <!-- right (side) -->
     <aside class="right">
       <section class="card">
         <strong>quick stats</strong>
         <div class="stats-grid" style="margin-top:10px">
           <div class="stat">
-            <strong id="avgScore">—</strong>
+            <strong id="avgScore">-</strong>
             <div class="muted">avg score</div>
           </div>
           <div class="stat">
-            <strong id="bestScore">—</strong>
+            <strong id="bestScore">-</strong>
             <div class="muted">best score</div>
           </div>
           <div class="stat">
-            <strong id="avgPutts">—</strong>
+            <strong id="avgPutts">-</strong>
             <div class="muted">avg putts</div>
           </div>
           <div class="stat">
-            <strong id="avgHoles">—</strong>
+            <strong id="avgHoles">-</strong>
             <div class="muted">avg holes</div>
           </div>
         </div>
@@ -310,7 +258,7 @@
           <span class="small">sparkline</span>
         </div>
         <canvas id="history"></canvas>
-        <div style="margin-top:8px" class="small">use this for a neat graph; click a table row to remove it.</div>
+        <div style="margin-top:8px" class="small">use this for a neat graph, click a table row to remove it.</div>
       </section>
     </aside>
   </div>
@@ -321,8 +269,8 @@
     const ui = {
       rounds: [],
       els: {},
+      holeCount: 18,
       init() {
-        // cache elements
         this.els = {
           date: document.getElementById('date'),
           course: document.getElementById('course'),
@@ -341,15 +289,21 @@
           roundCount: document.getElementById('roundCount'),
           clearAll: document.getElementById('clearAll'),
           importSample: document.getElementById('importSample'),
-          canvas: document.getElementById('history')
+          canvas: document.getElementById('history'),
+          holeModeToggle: document.getElementById('holeModeToggle'),
+          holesPanel: document.getElementById('holesPanel'),
+          holesContainer: document.getElementById('holesContainer'),
+          applyHoleTotals: document.getElementById('applyHoleTotals'),
+          clearHoles: document.getElementById('clearHoles'),
+          holesSummary: document.getElementById('holesSummary'),
+          gameMode: document.getElementById('gameMode'),
+          autoFillPars: document.getElementById('autoFillPars')
         };
 
-        // defaults
         if(!this.els.date.value){
           this.els.date.valueAsDate = new Date();
         }
 
-        // events
         this.els.roundForm.addEventListener('submit', e => {
           e.preventDefault();
           this.addRoundFromForm();
@@ -367,9 +321,154 @@
           this.importSampleData();
         });
 
-        // load
+        // hole mode toggle
+        this.els.holeModeToggle.addEventListener('change', e => {
+          const on = e.target.checked;
+          this.els.holesPanel.style.display = on ? 'block' : 'none';
+          this.els.holesPanel.setAttribute('aria-hidden', !on);
+          // lock main inputs when hole mode active
+          ['score','putts','fairways','holes','gameMode'].forEach(id => {
+            const el = document.getElementById(id);
+            if(on) el.setAttribute('readonly','readonly');
+            else el.removeAttribute('readonly');
+          });
+          // build holes if turning on
+          if(on && this.els.holesContainer.children.length === 0) this.buildHoles(this.holeCount);
+          // if turning off, clear hole aggregations (keeps values but unlocks)
+        });
+
+        this.els.applyHoleTotals.addEventListener('click', () => {
+          // copy current hole aggregates to main fields (already live syncing but explicitly apply)
+          this.updateHoleAggregates();
+          alert('hole totals applied to form');
+        });
+
+        this.els.clearHoles.addEventListener('click', () => {
+          if(confirm('clear all hole inputs?')){
+            this.clearHoleInputs();
+            this.updateHoleAggregates();
+          }
+        });
+
+        this.els.autoFillPars.addEventListener('click', () => {
+          // simple alternating pars: 4,4,3 pattern for variety
+          const rows = this.els.holesContainer.querySelectorAll('.holes-row');
+          rows.forEach((row,i) => {
+            const parInput = row.querySelector('.par-input');
+            if(parInput) parInput.value = [4,4,3][i%3];
+          });
+        });
+
         this.load();
         this.render();
+      },
+
+      buildHoles(count = 18){
+        const container = this.els.holesContainer;
+        container.innerHTML = '';
+        for(let i=1;i<=count;i++){
+          const row = document.createElement('div');
+          row.className = 'holes-row';
+          row.innerHTML = `
+            <div class="hole-label">${i}</div>
+            <div>
+              <input class="par-input" type="number" min="3" max="5" placeholder="par" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
+            </div>
+            <div style="display:flex;gap:8px">
+              <input class="score-input" type="number" min="0" max="12" placeholder="score" style="width:60px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
+              <input class="putt-input" type="number" min="0" max="10" placeholder="putts" style="width:60px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
+            </div>
+            <div style="display:flex;justify-content:center;align-items:center">
+              <label style="display:inline-flex;align-items:center;gap:6px" class="small"><input class="fw-input" type="checkbox">fw</label>
+            </div>
+          `;
+          container.appendChild(row);
+
+          // wire events
+          const scoreInput = row.querySelector('.score-input');
+          const puttInput = row.querySelector('.putt-input');
+          const fwInput = row.querySelector('.fw-input');
+          const parInput = row.querySelector('.par-input');
+
+          const handler = () => this.updateHoleAggregates();
+          scoreInput.addEventListener('input', handler);
+          puttInput.addEventListener('input', handler);
+          fwInput.addEventListener('change', handler);
+          parInput.addEventListener('input', handler);
+        }
+
+        // initial aggregate update
+        this.updateHoleAggregates();
+      },
+
+      clearHoleInputs(){
+        const rows = this.els.holesContainer.querySelectorAll('.holes-row');
+        rows.forEach(row => {
+          row.querySelector('.score-input').value = '';
+          row.querySelector('.putt-input').value = '';
+          row.querySelector('.fw-input').checked = false;
+          row.querySelector('.par-input').value = '';
+        });
+      },
+
+      updateHoleAggregates(){
+        const rows = this.els.holesContainer.querySelectorAll('.holes-row');
+        let totalScore = 0;
+        let totalPutts = 0;
+        let totalFW = 0;
+        let holesWithScore = 0;
+        const breakdown = [];
+
+        rows.forEach((row,i) => {
+          const s = parseInt(row.querySelector('.score-input').value || '',10);
+          const p = parseInt(row.querySelector('.putt-input').value || '',10);
+          const fw = row.querySelector('.fw-input').checked;
+          const par = parseInt(row.querySelector('.par-input').value || '',10) || null;
+
+          if(!Number.isNaN(s) && s > 0){
+            holesWithScore++;
+            totalScore += s;
+          }
+          if(!Number.isNaN(p)) totalPutts += (p || 0);
+          if(fw) totalFW++;
+
+          breakdown.push({ hole: i+1, par, score: Number.isFinite(s) ? s : null, putts: Number.isFinite(p) ? p : null, fairway: !!fw });
+        });
+
+        // update summary text
+        this.els.holesSummary.textContent = `${holesWithScore} holes / ${totalScore} score / ${totalPutts} putts / ${totalFW} fw`;
+
+        // write to main form fields (only if in hole mode)
+        if(this.els.holeModeToggle.checked){
+          this.els.score.value = totalScore || '';
+          this.els.putts.value = totalPutts || '';
+          this.els.fairways.value = totalFW || '';
+          this.els.holes.value = holesWithScore || '';
+          // compute game mode
+          let gm = '';
+          if(holesWithScore >= 18) gm = '18 hole';
+          else if(holesWithScore >= 9) gm = '9 hole';
+          else if(holesWithScore > 0) gm = `Partial: ${holesWithScore}`;
+          else gm = '';
+          // try to set select if matches known options, otherwise set to custom text and add option
+          const opts = Array.from(this.els.gameMode.options).map(o => o.value);
+          if(opts.includes(gm)) this.els.gameMode.value = gm;
+          else {
+            // ensure we don't create tons of custom options
+            let custom = this.els.gameMode.querySelector('option[data-custom="true"]');
+            if(!custom){
+              custom = document.createElement('option');
+              custom.setAttribute('data-custom','true');
+              this.els.gameMode.appendChild(custom);
+            }
+            custom.value = gm;
+            custom.textContent = gm || 'manual';
+            this.els.gameMode.value = gm;
+          }
+
+          // store a temporary currentHoleBreakdown so addRoundFromForm can use it
+          this.currentHoleBreakdown = breakdown;
+        }
       },
 
       addRoundFromForm(){
@@ -379,6 +478,7 @@
           alert('please enter a valid score');
           return;
         }
+        const holesPlayed = parseInt(this.els.holes.value || 0,10);
         const round = {
           id: Date.now(),
           date,
@@ -386,15 +486,24 @@
           score,
           putts: parseInt(this.els.putts.value || 0,10),
           fairways: parseInt(this.els.fairways.value || 0,10),
-          holes: parseInt(this.els.holes.value || 0,10),
-          notes: this.els.notes.value || ''
+          holes: holesPlayed,
+          gameMode: (this.els.gameMode.value || (holesPlayed >=18 ? '18 hole' : holesPlayed >=9 ? '9 hole' : (holesPlayed>0? `${holesPlayed} hole` : ''))),
+          notes: this.els.notes.value || '',
+          holesBreakdown: this.currentHoleBreakdown || null
         };
-        // add to start (most recent first)
         this.rounds.unshift(round);
         this.save();
         this.render();
         this.els.roundForm.reset();
         this.els.date.valueAsDate = new Date();
+        // clear hole breakdown snapshot after add
+        this.currentHoleBreakdown = null;
+        // re-lock/unlock main fields based on hole mode toggle state
+        if(this.els.holeModeToggle.checked){
+          // keep hole panel; rebuild empty
+          this.clearHoleInputs();
+          this.updateHoleAggregates();
+        }
       },
 
       save(){
@@ -417,10 +526,8 @@
       },
 
       render(){
-        // update count
         this.els.roundCount.textContent = this.rounds.length;
 
-        // render table
         this.els.tbody.innerHTML = '';
         for(const r of this.rounds){
           const tr = document.createElement('tr');
@@ -431,9 +538,9 @@
             <td>${r.putts}</td>
             <td>${r.fairways}</td>
             <td>${r.holes}</td>
-            <td>${this.escapeHtml(r.notes).slice(0,60)}</td>
+            <td>${this.escapeHtml(r.gameMode || '')}</td>
+            <td>${this.escapeHtml(r.notes || '').slice(0,60)}</td>
           `;
-          // click to remove one round
           tr.addEventListener('click', () => {
             if(confirm('remove this round?')) {
               this.rounds = this.rounds.filter(x => x.id !== r.id);
@@ -444,20 +551,17 @@
           this.els.tbody.appendChild(tr);
         }
 
-        // stats
         this.updateStats();
-
-        // chart
         this.drawChart();
       },
 
       updateStats(){
         const list = this.rounds;
         if(!list.length){
-          this.els.avgScore.textContent = '—';
-          this.els.bestScore.textContent = '—';
-          this.els.avgPutts.textContent = '—';
-          this.els.avgHoles.textContent = '—';
+          this.els.avgScore.textContent = '-';
+          this.els.bestScore.textContent = '-';
+          this.els.avgPutts.textContent = '-';
+          this.els.avgHoles.textContent = '-';
           return;
         }
         const scores = list.map(r => r.score);
@@ -479,7 +583,6 @@
       drawChart(){
         const canvas = this.els.canvas;
         const ctx = canvas.getContext('2d');
-        // resize for device pixel ratio for crisp lines
         const dpr = window.devicePixelRatio || 1;
         const w = canvas.clientWidth;
         const h = canvas.clientHeight;
@@ -487,14 +590,12 @@
         canvas.height = Math.floor(h * dpr);
         ctx.scale(dpr, dpr);
 
-        // background
         ctx.clearRect(0,0,w,h);
         ctx.fillStyle = 'rgba(0,0,0,0.06)';
         ctx.fillRect(0,0,w,h);
 
         if(this.rounds.length === 0) return;
 
-        // take last 12 rounds (most recent first)
         const recent = this.rounds.slice(0,12).map(r => r.score).reverse();
         const max = Math.max(...recent);
         const min = Math.min(...recent);
@@ -510,12 +611,10 @@
 
         recent.forEach((val,i) => {
           const x = pad + (i / (recent.length - 1 || 1)) * usableW;
-          // normalize (higher score lower on canvas)
           const t = (val - min) / Math.max(1, (max - min));
           const y = pad + (1 - t) * usableH;
           if(i === 0) ctx.moveTo(x,y);
           else ctx.lineTo(x,y);
-          // draw small dot
           ctx.fillStyle = 'rgba(255,255,255,0.06)';
           ctx.beginPath();
           ctx.arc(x,y,3,0,Math.PI*2);
@@ -526,11 +625,10 @@
       },
 
       importSampleData(){
-        // small sample so the user sees how it works
         const sample = [
-          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, holes:12, notes:'test: good wind' },
-          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, holes:18, notes:'' },
-          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, holes:9, notes:'new putter' }
+          { id: Date.now()+1, date: this.iso(-2), course: 'creekside', score:78, putts:30, fairways:9, holes:12, notes:'test: good wind', gameMode:'Partial: 12', holesBreakdown: null },
+          { id: Date.now()+2, date: this.iso(-9), course: 'ridge links', score:85, putts:34, fairways:6, holes:18, notes:'', gameMode:'18 hole', holesBreakdown: null },
+          { id: Date.now()+3, date: this.iso(-16), course: 'meadow park', score:81, putts:32, fairways:7, holes:9, notes:'new putter', gameMode:'9 hole', holesBreakdown: null }
         ];
         this.rounds = sample.concat(this.rounds);
         this.save();
@@ -550,9 +648,7 @@
       }
     };
 
-    // init
     ui.init();
   </script>
 </body>
 </html>
-
