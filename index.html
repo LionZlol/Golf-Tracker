@@ -297,7 +297,7 @@
           const rows = this.els.holesContainer.querySelectorAll('.holes-row');
           rows.forEach((row,i) => {
             const parInput = row.querySelector('.par-input');
-            if(parInput) parInput.value = [4,4,3][i%3];
+            if(parInput) parInput.value = Math.floor(Math.random() * 3) + 3;
           });
           this.updateHoleAggregates();
         });
@@ -589,3 +589,4 @@
   </script>
 </body>
 </html>
+
