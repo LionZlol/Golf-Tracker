@@ -708,7 +708,17 @@
 
         if(this.rounds.length === 0) return;
 
-        const recent = this.rounds.slice(0,12).map(r => r.score).reverse();
+        // build sparkline values: scale any round with fewer than 18 holes up to an 18-hole equivalent
+        // (used only for the sparkline visualization; stored scores remain unchanged)
+        const recent = this.rounds
+          .slice(0, 12)
+          .map(r => {
+            const holes = Number(r.holes) || 0;
+            const score = Number(r.score) || 0;
+            if (!holes || holes === 18) return score;            // 18 (or missing) — leave unchanged
+            const factor = 18 / holes;                           // 9 -> 2, 12 -> 1.5, etc.
+            return Math.round(score * factor);                   // round for nicer plotting (optional)
+          }).reverse();
         const max = Math.max(...recent);
         const min = Math.min(...recent);
         const pad = 8;
@@ -783,3 +793,4 @@
   </script>
 </body>
 </html>
+
