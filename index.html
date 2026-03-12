@@ -461,8 +461,6 @@
 
       renderProfiles(){
         const container = this.els.tabsContainer;
-        // remove all tab nodes except add button
-        // keep the add button at end
         const addBtn = this.els.addProfileBtn;
         container.innerHTML = '';
         // render tabs
@@ -473,16 +471,66 @@
           btn.type = 'button';
           btn.dataset.id = p.id;
           btn.innerHTML = `<span class="name">${this.escapeHtml(p.name)}</span><span class="rename" aria-hidden="true">✎</span>`;
+      
+          // left-click: switch profile
           btn.addEventListener('click', () => this.switchProfile(p.id));
-          // double-click to rename
+      
+          // double-click: rename
           btn.addEventListener('dblclick', (e) => {
             e.stopPropagation();
             this.renameProfile(p.id);
           });
+      
+          // right-click (context menu): confirm and delete profile
+          btn.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // safety: warn user and confirm deletion
+            const ok = confirm(`Delete profile "${p.name}" and all its saved rounds? This cannot be undone.`);
+            if(!ok) return;
+            // perform deletion
+            this.deleteProfile(p.id);
+          });
+      
           container.appendChild(btn);
         }
         // append add button last
         container.appendChild(addBtn);
+      },
+      
+      // new method: deletes a profile and its storage, switches active profile if needed
+      deleteProfile(id){
+        const idx = this.profiles.findIndex(x => x.id === id);
+        if(idx === -1) return;
+      
+        // Remove stored rounds for that profile
+        try {
+          localStorage.removeItem(this.profileStorageKey(id));
+        } catch(e) {
+          console.error('error removing profile storage', e);
+        }
+      
+        // Remove profile from list and persist
+        this.profiles.splice(idx, 1);
+        this.saveProfiles();
+      
+        // If the deleted profile was active, switch to a remaining profile or create a new default one
+        if(this.currentProfileId === id){
+          if(this.profiles.length > 0){
+            // pick nearest profile (use same index or last)
+            const newIndex = Math.min(idx, this.profiles.length - 1);
+            const newId = this.profiles[newIndex].id;
+            this.currentProfileId = newId;
+            this.loadProfileRounds(newId);
+          } else {
+            // no profiles left -> create a fresh default
+            this.createProfile('User 1', true);
+          }
+        }
+      
+        // refresh UI
+        this.renderProfiles();
+        this.render();
       },
 
       /* ========== Hole mode & form helpers (unchanged logic mostly) ========== */
@@ -793,4 +841,5 @@
   </script>
 </body>
 </html>
+
 
