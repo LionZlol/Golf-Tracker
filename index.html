@@ -76,20 +76,71 @@
     .hole-label{ font-weight:700; color:var(--muted); font-size:12px; text-align:center }
     .holes-controls{ display:flex; gap:8px; margin-top:8px; }
 
-    @media (max-width:980px){ .app{ grid-template-columns: 1fr; padding-bottom:60px } .right{ order:2 } }
+    /* Tabs */
+    .tabs {
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background: transparent;
+      padding:6px;
+      border-radius:10px;
+    }
+    .tab {
+      background: rgba(255,255,255,0.02);
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:600;
+      cursor:pointer;
+      color:var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      user-select:none;
+      border:1px solid transparent;
+    }
+    .tab.active {
+      background: linear-gradient(90deg, rgba(110,195,106,0.14), rgba(110,195,106,0.06));
+      color: #dfffe6;
+      border-color: rgba(110,195,106,0.18);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+    }
+    .tab .name { max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block; font-size:13px; color:inherit; }
+    .tab .rename { font-size:12px; color:var(--muted); cursor:pointer; display:none; }
+    .tab:hover .rename { display:inline-block; }
+    .tab-add {
+      background:transparent;
+      border:1px dashed rgba(255,255,255,0.03);
+      color:var(--muted);
+      padding:6px 8px;
+      border-radius:999px;
+      cursor:pointer;
+    }
+
+    @media (max-width:980px){ .app{ grid-template-columns: 1fr; padding-bottom:60px } .right{ order:2 } .tabs {overflow:auto} }
     @media (max-width:520px){ h1{font-size:22px} .lead{font-size:12px} form.row{grid-template-columns: 1fr} .stats-grid{grid-template-columns: 1fr 1fr} button{padding:10px} }
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <div class="title-wrap">
-        <h1>Golf Tracker</h1>
-        <p class="lead">quickly log rounds, track skills, and more</p>
-      </div>
-      <div class="center">
-        <div class="pill">rounds: <span id="roundCount">0</span></div>
-        <button id="clearAll" class="ghost" title="clear all saved rounds">clear</button>
+      <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="title-wrap" style="display:flex;flex-direction:column;gap:4px">
+            <h1>Golf Tracker</h1>
+            <p class="lead">quickly log rounds, track skills, and more</p>
+          </div>
+
+          <div class="center">
+            <div class="pill">rounds: <span id="roundCount">0</span></div>
+            <button id="clearAll" class="ghost" title="clear all saved rounds">clear</button>
+          </div>
+        </div>
+
+        <!-- Tabs row -->
+        <div class="tabs" id="tabsContainer" aria-label="profiles">
+          <!-- Tabs populated by JS -->
+          <button id="addProfileBtn" class="tab-add" title="Add profile">＋</button>
+        </div>
       </div>
     </header>
 
@@ -225,12 +276,18 @@
   </div>
 
   <script>
-    const STORAGE_KEY = 'golftracker.rounds.v1';
+    // storage keys
+    const PROFILE_LIST_KEY = 'golftracker.profiles.v1';
+    const BASE_KEY = 'golftracker.v1';
 
     const ui = {
       rounds: [],
       els: {},
       holeCount: 18,
+      profiles: [], // {id, name}
+      currentProfileId: null,
+      currentHoleBreakdown: null,
+
       init() {
         this.els = {
           date: document.getElementById('date'),
@@ -256,7 +313,9 @@
           holesContainer: document.getElementById('holesContainer'),
           clearHoles: document.getElementById('clearHoles'),
           holesSummary: document.getElementById('holesSummary'),
-          scoreCardBtn: document.getElementById('scoreCardBtn')
+          scoreCardBtn: document.getElementById('scoreCardBtn'),
+          tabsContainer: document.getElementById('tabsContainer'),
+          addProfileBtn: document.getElementById('addProfileBtn'),
         };
 
         if(!this.els.date.value) this.els.date.valueAsDate = new Date();
@@ -267,7 +326,8 @@
         });
 
         this.els.clearAll.addEventListener('click', () => {
-          if(confirm('clear all saved rounds?')){
+          if(!this.currentProfileId) return;
+          if(confirm('clear all saved rounds for this user?')){
             this.rounds = [];
             this.save();
             this.render();
@@ -298,36 +358,155 @@
           this.applyHoleTotalsToForm();
         });
 
-        this.load();
+        this.els.addProfileBtn.addEventListener('click', () => {
+          this.addNewProfile();
+        });
+
+        // load profiles, ensure at least one profile exists, then load the current profile's rounds
+        this.loadProfiles();
+        if(this.profiles.length === 0){
+          this.createProfile('User 1', true);
+        } else {
+          // pick the first profile as active by default (or previous selection)
+          const savedActive = localStorage.getItem(BASE_KEY + '.activeProfile');
+          const exists = this.profiles.find(p => p.id === savedActive);
+          this.currentProfileId = exists ? savedActive : this.profiles[0].id;
+          this.loadProfileRounds(this.currentProfileId);
+        }
+
+        this.renderProfiles();
         this.render();
       },
+
+      /* ========== Profiles management ========== */
+
+      loadProfiles(){
+        try {
+          const raw = localStorage.getItem(PROFILE_LIST_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          if(Array.isArray(parsed)) this.profiles = parsed;
+          else this.profiles = [];
+        } catch(e) { console.error('loadProfiles error', e); this.profiles = []; }
+      },
+
+      saveProfiles(){
+        try {
+          localStorage.setItem(PROFILE_LIST_KEY, JSON.stringify(this.profiles));
+        } catch(e) { console.error('saveProfiles error', e); }
+      },
+
+      createProfile(name = 'User', switchTo = false){
+        const id = 'p_' + Date.now();
+        const profile = { id, name: String(name || 'User') };
+        this.profiles.push(profile);
+        this.saveProfiles();
+        // create empty rounds key for profile
+        try { localStorage.setItem(this.profileStorageKey(id), JSON.stringify([])); } catch(e){}
+        this.renderProfiles();
+        if(switchTo) this.switchProfile(id);
+        return profile;
+      },
+
+      addNewProfile(){
+        // auto name "User N"
+        const existingCount = this.profiles.length + 1;
+        const name = 'User ' + existingCount;
+        this.createProfile(name, true);
+      },
+
+      renameProfile(id){
+        const p = this.profiles.find(x => x.id === id);
+        if(!p) return;
+        const newName = prompt('Rename user', p.name);
+        if(newName && newName.trim()){
+          p.name = newName.trim();
+          this.saveProfiles();
+          this.renderProfiles();
+        }
+      },
+
+      profileStorageKey(id){
+        return `${BASE_KEY}.profile.${id}`;
+      },
+
+      saveCurrentProfile(){
+        if(!this.currentProfileId) return;
+        try {
+          localStorage.setItem(this.profileStorageKey(this.currentProfileId), JSON.stringify(this.rounds));
+          // remember active
+          localStorage.setItem(BASE_KEY + '.activeProfile', this.currentProfileId);
+        } catch(e){ console.error('saveCurrentProfile error', e); }
+      },
+
+      loadProfileRounds(id){
+        if(!id) { this.rounds = []; return; }
+        try {
+          const raw = localStorage.getItem(this.profileStorageKey(id));
+          const parsed = raw ? JSON.parse(raw) : [];
+          if(Array.isArray(parsed)) this.rounds = parsed;
+          else this.rounds = [];
+        } catch(e){ console.error('loadProfileRounds error', e); this.rounds = []; }
+        this.currentProfileId = id;
+      },
+
+      switchProfile(id){
+        if(id === this.currentProfileId) return;
+        // persist current
+        this.saveCurrentProfile();
+        // load new
+        this.loadProfileRounds(id);
+        this.renderProfiles();
+        this.render();
+      },
+
+      renderProfiles(){
+        const container = this.els.tabsContainer;
+        // remove all tab nodes except add button
+        // keep the add button at end
+        const addBtn = this.els.addProfileBtn;
+        container.innerHTML = '';
+        // render tabs
+        for(const p of this.profiles){
+          const btn = document.createElement('button');
+          btn.className = 'tab' + (p.id === this.currentProfileId ? ' active' : '');
+          btn.title = p.name;
+          btn.type = 'button';
+          btn.dataset.id = p.id;
+          btn.innerHTML = `<span class="name">${this.escapeHtml(p.name)}</span><span class="rename" aria-hidden="true">✎</span>`;
+          btn.addEventListener('click', () => this.switchProfile(p.id));
+          // double-click to rename
+          btn.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            this.renameProfile(p.id);
+          });
+          container.appendChild(btn);
+        }
+        // append add button last
+        container.appendChild(addBtn);
+      },
+
+      /* ========== Hole mode & form helpers (unchanged logic mostly) ========== */
 
       buildHoles(count = 18){
         this.holeCount = count;
         const container = this.els.holesContainer;
         // preserve existing if possible
-        const existing = Array.from(container.querySelectorAll('.holes-row')).map(row => ({
-          par: row.querySelector('.par-input')?.value || '',
-          score: row.querySelector('.score-input')?.value || '',
-          putts: row.querySelector('.putt-input')?.value || '',
-          fw: row.querySelector('.fw-input')?.checked || false
-        }));
+        const existing = Array.from(container.querySelectorAll('.holes-row')).map(row => ({}));
         container.innerHTML = '';
         for(let i=1;i<=count;i++){
-          const prev = existing[i-1] || {};
           const row = document.createElement('div');
           row.className = 'holes-row';
           row.innerHTML = `
             <div class="hole-label">${i}</div>
             <div>
-              <input class="par-input" type="number" min="3" max="5" placeholder="par" value="${this.escapeAttr(prev.par)}" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
+              <input class="par-input" type="number" min="3" max="5" placeholder="par" value="" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
             </div>
             <div style="display:flex;gap:8px">
-              <input class="score-input" type="number" min="0" max="12" placeholder="score" value="${this.escapeAttr(prev.score)}" style="width:60px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
-              <input class="putt-input" type="number" min="0" max="10" placeholder="putts" value="${this.escapeAttr(prev.putts)}" style="width:60px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
+              <input class="score-input" type="number" min="0" max="12" placeholder="score" value="" style="width:60px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
+              <input class="putt-input" type="number" min="0" max="10" placeholder="putts" value="" style="width:60px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;font-size:13px">
             </div>
             <div style="display:flex;justify-content:center;align-items:center">
-              <label style="display:inline-flex;align-items:center;gap:6px" class="small"><input class="fw-input" type="checkbox" ${prev.fw ? 'checked' : ''}>fw</label>
+              <label style="display:inline-flex;align-items:center;gap:6px" class="small"><input class="fw-input" type="checkbox">fw</label>
             </div>
           `;
           container.appendChild(row);
@@ -421,6 +600,8 @@
         alert('score card copied to main editor');
       },
 
+      /* ========== Rounds CRUD (per-profile) ========== */
+
       addRoundFromForm(){
         const date = this.els.date.value || new Date().toISOString().slice(0,10);
         const score = parseInt(this.els.score.value,10);
@@ -450,22 +631,11 @@
       },
 
       save(){
-        try{
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.rounds));
-        }catch(e){
-          console.error('save error', e);
-        }
+        this.saveCurrentProfile();
       },
 
       load(){
-        const raw = localStorage.getItem(STORAGE_KEY);
-        try{
-          const parsed = raw ? JSON.parse(raw) : [];
-          if(Array.isArray(parsed)) this.rounds = parsed;
-        }catch(e){
-          console.error('load error',e);
-          this.rounds = [];
-        }
+        // not used: rounds loaded via loadProfileRounds
       },
 
       render(){
